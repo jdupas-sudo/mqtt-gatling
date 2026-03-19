@@ -85,6 +85,14 @@ Examples with `gatling.duration=300` (60s per stage):
 
 Look for the inflection point in the Gatling Enterprise report where response times spike or error rates climb.
 
+### 5. RoundTripSimulation (End-to-End Validation)
+Measures full round-trip latency: camera publishes an alert → command-server receives it and immediately sends a command back → camera receives the command. Uses Gatling's `.expect()` and `.check()` to validate that the response arrives within 5 seconds and contains a valid `commandType`. Best run with fewer users (e.g. 50) — the goal is latency measurement, not volume.
+
+```
+Camera → alert → EMQX → command-server → command → EMQX → Camera
+```
+
+
 ## Configuration
 
 All parameters are configurable via environment variables (`.env` or inline):

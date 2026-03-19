@@ -29,6 +29,7 @@ services:
       - SITE_IDS=${SITE_IDS:-site-retail-001,site-retail-002,site-retail-003}
       - CAMERAS_PER_SITE=${CAMERAS_PER_SITE:-100}
       - COMMAND_INTERVAL_MS=${COMMAND_INTERVAL_MS:-10000}
+      - ALERT_RESPONSE_ENABLED=${ALERT_RESPONSE_ENABLED:-true}
     ports:
       - "3000:3000"
     networks:

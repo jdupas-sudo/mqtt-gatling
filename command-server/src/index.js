@@ -22,6 +22,11 @@ const client = mqtt.connect(mqttUrl, {
   reconnectPeriod: 5000,
 });
 
+// When enabled, the command-server replies to every alert with a command
+// back to the originating camera. Required for RoundTripSimulation.
+const ALERT_RESPONSE_ENABLED =
+  (process.env.ALERT_RESPONSE_ENABLED || "true") === "true";
+
 const commandPublisher = new CommandPublisher(
   client,
   telemetryLogger,
@@ -56,6 +61,18 @@ client.on("message", (topic, payload) => {
     telemetryLogger.handleCommandAck(topic, payload);
   } else if (topic.endsWith("/alert")) {
     telemetryLogger.handleAlert(topic, payload);
+    // When alert response is enabled, immediately send a command back to the camera that triggered the alert.
+    // This creates a measurable round-trip: camera publishes alert → server receives → server sends command → camera receives.
+    if (ALERT_RESPONSE_ENABLED) {
+      try {
+        const data = JSON.parse(payload.toString());
+        if (data.siteId && data.cameraId) {
+          commandPublisher.publishCommandTo(data.siteId, data.cameraId);
+        }
+      } catch {
+        // ignore malformed payloads
+      }
+    }
   }
 });
 

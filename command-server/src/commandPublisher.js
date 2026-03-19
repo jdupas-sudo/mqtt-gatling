@@ -51,6 +51,12 @@ class CommandPublisher {
     const randomKey =
       activeCameras[Math.floor(Math.random() * activeCameras.length)];
     const [siteId, cameraId] = randomKey.split("/");
+    this.publishCommandTo(siteId, cameraId);
+  }
+
+  // Send a command to a specific camera. Used by the periodic publisher
+  // and by the alert-response handler for round-trip testing.
+  publishCommandTo(siteId, cameraId) {
     const template =
       COMMAND_TYPES[Math.floor(Math.random() * COMMAND_TYPES.length)];
 
