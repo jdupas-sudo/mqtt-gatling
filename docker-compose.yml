@@ -1,0 +1,76 @@
+services:
+  emqx:
+    image: ${EMQX_IMAGE:-emqx/emqx:5.8}
+    container_name: sentinelview-emqx
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+      - "${EMQX_WS_PORT:-8083}:8083"
+      - "${EMQX_DASHBOARD_PORT:-18083}:18083"
+    volumes:
+      - ./emqx/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+    networks:
+      - sentinelview-net
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  command-server:
+    build: ./command-server
+    container_name: sentinelview-command-server
+    depends_on:
+      emqx:
+        condition: service_healthy
+    environment:
+      - MQTT_HOST=${MQTT_HOST:-emqx}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - SITE_IDS=${SITE_IDS:-site-retail-001,site-retail-002,site-retail-003}
+      - CAMERAS_PER_SITE=${CAMERAS_PER_SITE:-100}
+      - COMMAND_INTERVAL_MS=${COMMAND_INTERVAL_MS:-10000}
+    ports:
+      - "3000:3000"
+    networks:
+      - sentinelview-net
+    restart: unless-stopped
+
+  gatling:
+    build:
+      context: ./gatling
+    container_name: sentinelview-gatling
+    depends_on:
+      emqx:
+        condition: service_healthy
+      command-server:
+        condition: service_started
+    environment:
+      - MQTT_HOST=${GATLING_BROKER_HOST:-emqx}
+      - MQTT_PORT=${GATLING_BROKER_PORT:-1883}
+      - SIMULATION_CLASS=${SIMULATION_CLASS:-sentinelview.HeartbeatFloodSimulation}
+      - GATLING_USERS=${GATLING_USERS:-500}
+      - GATLING_DURATION=${GATLING_DURATION:-300}
+    networks:
+      - sentinelview-net
+
+  gatling-java:
+    build:
+      context: ./gatling-java
+    container_name: sentinelview-gatling-java
+    depends_on:
+      emqx:
+        condition: service_healthy
+      command-server:
+        condition: service_started
+    environment:
+      - MQTT_HOST=${GATLING_BROKER_HOST:-emqx}
+      - MQTT_PORT=${GATLING_BROKER_PORT:-1883}
+      - SIMULATION_CLASS=${SIMULATION_CLASS:-sentinelview.HeartbeatFloodSimulation}
+      - GATLING_USERS=${GATLING_USERS:-500}
+      - GATLING_DURATION=${GATLING_DURATION:-300}
+    networks:
+      - sentinelview-net
+
+networks:
+  sentinelview-net:
+    driver: bridge

@@ -1,0 +1,14 @@
+{
+  "name": "sentinelview-command-server",
+  "version": "1.0.0",
+  "description": "SentinelView cloud backend simulator — subscribes to telemetry, publishes commands",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "mqtt": "^5.10.0",
+    "uuid": "^10.0.0"
+  }
+}
